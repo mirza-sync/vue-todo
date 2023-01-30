@@ -1,5 +1,5 @@
 <script setup>
-import { computed, onMounted, ref } from 'vue';
+import { computed, onMounted, ref, watch } from 'vue';
 
 const name = ref('')
 const todos = ref([])
@@ -7,11 +7,32 @@ const input_content = ref('')
 const input_category = ref(null)
 
 const todos_asc = computed(() => todos.value.sort((a, b) => {
-  return a.createdAt - b.createdAt
+  return b.createdAt - a.createdAt
 }))
 
+const addTodo = () => {
+  if (input_content.value === '' || input_category.value == null) {
+    return
+  }
+
+  todos.value.push({
+    content: input_content.value,
+    category: input_category.value,
+    done: false,
+    createdAt: new Date().getTime(),
+  })
+
+  input_content.value = ''
+  input_category.value = null
+
+}
+
+watch(todos, newVal => {
+  localStorage.setItem('todos', JSON.stringify(newVal))
+}, { deep: true })
+
 onMounted(() => {
-  name.value = localStorage.getItem('name') || ''
+  todos.value = JSON.parse(localStorage.getItem('todos')) || []
 })
 </script>
 
@@ -36,7 +57,7 @@ onMounted(() => {
             <span class="bubble business"></span>
             <div>Business</div>
           </label>
-          
+
           <label>
             <input type="radio" name="category" value="personal" v-model="input_category">
             <span class="bubble personal"></span>
@@ -46,6 +67,12 @@ onMounted(() => {
 
         <input type="submit" value="Add Todo">
       </form>
+    </section>
+
+    <section>
+      <div v-for="todo in todos_asc" key="todo.createdAt">
+        {{ todo.content }}
+      </div>
     </section>
   </main>
 </template>
